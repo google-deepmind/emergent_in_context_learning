@@ -1,25 +1,40 @@
-# emergent_in_context_learning
+# Emergent In-Context Learning in Transformers
 
-TODO(b/235073897): Add a description for your new project, explain what is
-being released here, etc... Additional, the following sections are normally
-expected for all releases. Feel free to add additional sections if appropriate
-for your project.
+This is the codebase associated with the following paper:
+
+**Data Distributional Properties Drive Emergent In-Context Learning in
+Transformers** ([arXiv](https://arxiv.org/abs/2205.05055))<br/>
+_Stephanie C.Y. Chan, Adam Santoro, Andrew K. Lampinen, Jane X. Wang, Aaditya
+Singh, Pierre H. Richemond, Jay McClelland, Felix Hill_
+
+The experiments involve training and evaluating a transformer on sequences of
+[Omniglot](https://github.com/brendenlake/omniglot) image-label pairs, to elicit
+and measure (few-shot) in-context learning vs in-weights learning. See Sec 2 of
+the paper for an overview of the experimental design.
 
 ## Installation
 
-Write instructions for how the user should install your code. The instructions
-should ideally be valid when copy-pasted. You can combine this with the Usage
-section if there's no separate installation step.
+TODO(scychan) will be added in the next CL
 
 ## Usage
 
-Write example usage of your code. The instructions should ideally be valid when
-copy-pasted, and will be used by your technical reviewer to verify that your
-package functions correctly.
+TODO(scychan) will be added in the next CL
 
 ## Citing this work
 
-Add citation details here, usually a pastable BibTeX snippet.
+If you use this work, please cite the following paper
+```
+@misc{chan_data_2022,
+  title = {Data {Distributional} {Properties} {Drive} {Emergent} {In}-{Context} {Learning} in {Transformers}},
+  url = {http://arxiv.org/abs/2205.05055},
+  publisher = {arXiv},
+  author = {Chan, Stephanie C. Y. and Santoro, Adam and Lampinen, Andrew K. and Wang, Jane X. and Singh, Aaditya and Richemond, Pierre H. and McClelland, Jay and Hill, Felix},
+  month = may,
+  year = {2022},
+  note = {arXiv:2205.05055 [cs]},
+  keywords = {Computer Science - Machine Learning, Computer Science - Artificial Intelligence, Computer Science - Computation and Language},
+}
+```
 
 ## License and disclaimer
 
