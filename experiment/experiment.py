@@ -18,8 +18,8 @@
 import collections
 import functools
 import math
-import sys
 
+from absl import app
 from absl import flags
 from absl import logging
 import haiku as hk
@@ -41,6 +41,7 @@ from emergent_in_context_learning.modules.rnn import RNN
 from emergent_in_context_learning.modules.transformer import Transformer
 
 AUTOTUNE = tf.data.experimental.AUTOTUNE
+FLAGS = flags.FLAGS
 
 
 class Experiment(experiment.AbstractExperiment):
@@ -443,14 +444,6 @@ class Experiment(experiment.AbstractExperiment):
 
     # Log logits, labels, example for last prediction in the first sequence.
     logits_to_log = logits[0][0][-1]
-    if writer:
-      global_step = np.array(utils.get_first(global_step))
-      logits_image = self._vector_to_square(logits_to_log)
-      images_dict = {'logits': logits_image}
-      if self.example_type == 'omniglot':
-        images_dict.update({'example': batch['examples'][0][0][-1]})
-      writer.write_images(global_step, images_dict)
-
     scalars = utils.get_first(scalars)
     scalars.update({
         'prediction': np.argmax(logits_to_log),
@@ -545,14 +538,10 @@ class Experiment(experiment.AbstractExperiment):
     """See base class."""
 
     global_step = np.array(utils.get_first(global_step))
-    loss_acc_scalars, other_scalars, non_scalars = self._eval_epoch(
+    loss_acc_scalars, other_scalars, _ = self._eval_epoch(
         utils.get_first(rng))
     scalars = {**loss_acc_scalars, **other_scalars}
     scalars = {k: np.array(v) for k, v in scalars.items()}
-    non_scalars = {k: np.array(v) for k, v in non_scalars.items()}
-
-    writer.write_images(global_step, non_scalars)
-
     logging.info('[Step %d] eval_loss=%.2f, eval_accuracy=%.2f', global_step,
                  scalars['loss'], scalars['accuracy_query'])
     return scalars
@@ -633,6 +622,9 @@ class Experiment(experiment.AbstractExperiment):
     return loss_acc_scalars, other_scalars, non_scalars
 
 
+def main(argv, experiment_class):
+  platform.main(experiment_class, argv)
+
 if __name__ == '__main__':
   flags.mark_flag_as_required('config')
-  platform.main(Experiment, sys.argv[1:])
+  app.run(lambda argv: main(argv, Experiment))

@@ -116,6 +116,7 @@ def get_config(debug=False):
   config.save_checkpoint_interval = 300
   config.checkpoint_dir = '/tmp/jaxline/transformer_omniglot/'
   config.eval_specific_checkpoint_dir = ''
+  config.train_checkpoint_all_hosts = False
 
   # Evaluation modes.
   if ZIPF_EXPONENT:

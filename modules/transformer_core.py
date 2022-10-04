@@ -401,14 +401,14 @@ class SelfAttention(Attention):
   def __call__(
       self,
       x: chex.Array,
-      y: Optional[chex.Array] = None,
+      y: chex.Array = None,  # ignored.
       mask: Optional[chex.Array] = None,
       should_reset: Optional[chex.Array] = None,
       cache_steps: int = 0,
       dropout_tile_dims: int = 0,
   ) -> chex.Array:
     return super().__call__(
-        x, x, mask=mask, should_reset=should_reset, cache_steps=cache_steps,
+        x=x, y=x, mask=mask, should_reset=should_reset, cache_steps=cache_steps,
         dropout_tile_dims=dropout_tile_dims)
 
 
@@ -418,7 +418,7 @@ class CausalSelfAttention(SelfAttention):
   def __call__(
       self,
       x: chex.Array,
-      y: Optional[chex.Array] = None,
+      y: chex.Array = None,  # ignored.
       mask: Optional[chex.Array] = None,
       should_reset: Optional[chex.Array] = None,
       cache_steps: int = 0,
@@ -436,7 +436,7 @@ class CausalSelfAttention(SelfAttention):
     else:
       mask *= causal_mask
     return super().__call__(
-        x, mask=mask, should_reset=should_reset, cache_steps=cache_steps)
+        x=x, mask=mask, should_reset=should_reset, cache_steps=cache_steps)
 
 
 class SelfAttentionBlock(hk.Module):
@@ -476,13 +476,16 @@ class SelfAttentionBlock(hk.Module):
           relative_pos_emb=self._relative_pos_emb,
           relative_pos_clamp_len=self._relative_pos_clamp_len,
           dropout_prob=self._dropout_attn_prob)(
-              x, mask, should_reset, cache_steps)
+              x=x,
+              mask=mask,
+              should_reset=should_reset,
+              cache_steps=cache_steps)
     else:
       x = SelfAttention(
           num_heads=self._num_heads,
           init_scale=self._init_scale,
           dropout_prob=self._dropout_attn_prob,
-          relative_pos_emb=self._relative_pos_emb)(x, mask)
+          relative_pos_emb=self._relative_pos_emb)(x=x, mask=mask)
     return hk.dropout(hk.next_rng_key(), self._dropout_prob, x)
 
 

@@ -27,17 +27,17 @@ pip install -r ./emergent_in_context_learning/requirements.txt
 
 ### Default configs
 
-Default experiment configurations are provided in `configs/`, and should be used
-as `$CONFIG_NAME` in the launch commands below.
+Default experiment configurations are provided in `configs/`, and can be used
+in `$PATH_TO_CONFIG` in the launch commands below.
 
-*   `images_all_exemplars`: Each character class consists of 20 image examples
-    (the original Omniglot problem).
-*   `images_augmented`: We augment the total number of classes to 8x the
+*   `images_all_exemplars.py`: Each character class consists of 20 image
+    examples (the original Omniglot problem).
+*   `images_augmented.py`: We augment the total number of classes to 8x the
     original number, by applying transformations to each image class: flip left
     or right + rotate 0, 90, 180, or 270 degrees.
-*   `images_identical`: Each character class consists only of a single image
+*   `images_identical.py`: Each character class consists only of a single image
     (the 1st of the 20 examples provided in the original Omniglot dataset)
-*   `symbolic`: (relatively untested; not used in the paper)
+*   `symbolic.py`: (relatively untested; not used in the paper)
 
 Config files can be edited or forked as desired.
 
@@ -77,22 +77,25 @@ SeqGenerator` for more details on settings, which are specified in
 
 ### Launch commands
 
+These commands should be executed from the directory that you cloned the
+repository into.
+
 To run training:
 
 ```shell
-$ python experiment.py --config $CONFIG_NAME --mode train
+$ python -m emergent_in_context_learning.experiment.experiment --config $PATH_TO_CONFIG --jaxline_mode train
 ```
 
 To evaluate a trained model on in-context learning (on holdout classes):
 
 ```shell
-$ python experiment.py --config $CONFIG_NAME --mode eval_fewshot_holdout
+$ python -m emergent_in_context_learning.experiment.experiment --config $PATH_TO_CONFIG --jaxline_mode eval_fewshot_holdout
 ```
 
 To evaluate a trained model on in-weights learning (on trained classes):
 
 ```shell
-$ python experiment.py --config $CONFIG_NAME --mode eval_no_support_zipfian
+$ python -m emergent_in_context_learning.experiment.experiment --config $PATH_TO_CONFIG --jaxline_mode eval_no_support_zipfian
 ```
 
 
