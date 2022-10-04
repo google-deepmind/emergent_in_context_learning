@@ -1,4 +1,5 @@
 absl-py==1.2.0
+dill==0.3.5.1
 dm-haiku==0.0.7
 jaxline==0.0.5
 ml_collections==0.1.1

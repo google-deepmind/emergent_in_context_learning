@@ -12,6 +12,7 @@ The experiments involve training and evaluating a transformer on sequences of
 and measure (few-shot) in-context learning vs in-weights learning. See Sec 2 of
 the paper for an overview of the experimental design.
 
+
 ## Installation
 
 To install the necessary requirements:
@@ -83,19 +84,28 @@ repository into.
 To run training:
 
 ```shell
-$ python -m emergent_in_context_learning.experiment.experiment --config $PATH_TO_CONFIG --jaxline_mode train
+$ python -m emergent_in_context_learning.experiment.experiment --config $PATH_TO_CONFIG --jaxline_mode train --logtostderr
+# (save checkpoints using Ctrl+C)
 ```
 
-To evaluate a trained model on in-context learning (on holdout classes):
+To evaluate a trained model, override `config.restore_path` with the
+subdirectory of `config.checkpoint_dir` containing the relevant checkpoint
+(`$CKPT_DIR` below).
+
+To evaluate on in-context learning (on holdout classes):
 
 ```shell
-$ python -m emergent_in_context_learning.experiment.experiment --config $PATH_TO_CONFIG --jaxline_mode eval_fewshot_holdout
+$ python -m emergent_in_context_learning.experiment.experiment --config $PATH_TO_CONFIG
+ --logtostderr --config.one_off_evaluate --config.restore_path $CKPT_DIR
+ --jaxline_mode eval_fewshot_holdout
 ```
 
-To evaluate a trained model on in-weights learning (on trained classes):
+To evaluate on in-weights learning (on trained classes):
 
 ```shell
-$ python -m emergent_in_context_learning.experiment.experiment --config $PATH_TO_CONFIG --jaxline_mode eval_no_support_zipfian
+$ python -m emergent_in_context_learning.experiment.experiment --config $PATH_TO_CONFIG
+ --logtostderr --config.one_off_evaluate --config.restore_path $CKPT_DIR
+ --jaxline_mode eval_no_support_zipfian
 ```
 
 
@@ -104,14 +114,10 @@ $ python -m emergent_in_context_learning.experiment.experiment --config $PATH_TO
 If you use this work, please cite the following paper
 ```
 @misc{chan_data_2022,
-  title = {Data {Distributional} {Properties} {Drive} {Emergent} {In}-{Context} {Learning} in {Transformers}},
-  url = {http://arxiv.org/abs/2205.05055},
-  publisher = {arXiv},
+  title = {Data Distributional Properties Drive Emergent In-Context Learning in Transformers},
   author = {Chan, Stephanie C. Y. and Santoro, Adam and Lampinen, Andrew K. and Wang, Jane X. and Singh, Aaditya and Richemond, Pierre H. and McClelland, Jay and Hill, Felix},
-  month = may,
+  journal = {Neural Information Processing Systems},
   year = {2022},
-  note = {arXiv:2205.05055 [cs]},
-  keywords = {Computer Science - Machine Learning, Computer Science - Artificial Intelligence, Computer Science - Computation and Language},
 }
 ```
 

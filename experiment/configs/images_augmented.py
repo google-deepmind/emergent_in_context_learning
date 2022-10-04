@@ -114,9 +114,10 @@ def get_config(debug=False):
   config.log_train_data_interval = 60
   config.log_tensors_interval = 60
   config.save_checkpoint_interval = 300
+  config.train_checkpoint_all_hosts = False
   config.checkpoint_dir = '/tmp/jaxline/transformer_omniglot/'
   config.eval_specific_checkpoint_dir = ''
-  config.train_checkpoint_all_hosts = False
+  config.restore_path = ''
 
   # Evaluation modes.
   if ZIPF_EXPONENT:

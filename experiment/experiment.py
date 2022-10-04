@@ -16,12 +16,17 @@
 """Transformer experiment for Omniglot Sequences datasets."""
 
 import collections
+import datetime
 import functools
 import math
+import os
+import signal
+import threading
 
 from absl import app
 from absl import flags
 from absl import logging
+import dill
 import haiku as hk
 import jax
 import jax.numpy as jnp
@@ -544,6 +549,8 @@ class Experiment(experiment.AbstractExperiment):
     scalars = {k: np.array(v) for k, v in scalars.items()}
     logging.info('[Step %d] eval_loss=%.2f, eval_accuracy=%.2f', global_step,
                  scalars['loss'], scalars['accuracy_query'])
+    for k, v in scalars.items():
+      logging.info('%s: %d', k, v)
     return scalars
 
   def _build_eval_input(self):
@@ -622,8 +629,115 @@ class Experiment(experiment.AbstractExperiment):
     return loss_acc_scalars, other_scalars, non_scalars
 
 
+def _restore_state_to_in_memory_checkpointer(restore_path):
+  """Initializes experiment state from a checkpoint."""
+
+  # Load pretrained experiment state.
+  python_state_path = os.path.join(restore_path, 'checkpoint.dill')
+  with open(python_state_path, 'rb') as f:
+    pretrained_state = dill.load(f)
+  logging.info('Restored checkpoint from %s', python_state_path)
+
+  # Assign state to a dummy experiment instance for the in-memory checkpointer,
+  # broadcasting to devices.
+  dummy_experiment = Experiment(
+      mode='train', init_rng=0, config=FLAGS.config.experiment_kwargs.config)
+  for attribute, key in Experiment.CHECKPOINT_ATTRS.items():
+    setattr(dummy_experiment, attribute,
+            utils.bcast_local_devices(pretrained_state[key]))
+
+  jaxline_state = dict(
+      global_step=pretrained_state['global_step'],
+      experiment_module=dummy_experiment)
+  snapshot = utils.SnapshotNT(0, jaxline_state)
+
+  # Finally, seed the jaxline `utils.InMemoryCheckpointer` global dict.
+  utils.GLOBAL_CHECKPOINT_DICT['latest'] = utils.CheckpointNT(
+      threading.local(), [snapshot])
+
+
+def _get_step_date_label(global_step):
+  # Date removing microseconds.
+  date_str = datetime.datetime.now().isoformat().split('.')[0]
+  return f'step_{global_step}_{date_str}'
+
+
+def _setup_signals(save_model_fn):
+  """Sets up a signal for model saving."""
+  # Save a model on Ctrl+C.
+  def sigint_handler(unused_sig, unused_frame):
+    # Ideally, rather than saving immediately, we would then "wait" for a good
+    # time to save. In practice this reads from an in-memory checkpoint that
+    # only saves every 30 seconds or so, so chances of race conditions are very
+    # small.
+    save_model_fn()
+    logging.info(r'Use `Ctrl+\` to save and exit.')
+
+  # Exit on `Ctrl+\`, saving a model.
+  prev_sigquit_handler = signal.getsignal(signal.SIGQUIT)
+  def sigquit_handler(unused_sig, unused_frame):
+    # Restore previous handler early, just in case something goes wrong in the
+    # next lines, so it is possible to press again and exit.
+    signal.signal(signal.SIGQUIT, prev_sigquit_handler)
+    save_model_fn()
+    logging.info(r'Exiting on `Ctrl+\`')
+
+    # Re-raise for clean exit.
+    os.kill(os.getpid(), signal.SIGQUIT)
+
+  signal.signal(signal.SIGINT, sigint_handler)
+  signal.signal(signal.SIGQUIT, sigquit_handler)
+
+
+def _save_state_from_in_memory_checkpointer(
+    save_path, experiment_class: experiment.AbstractExperiment):
+  """Saves experiment state to a checkpoint."""
+  logging.info('Saving model.')
+  for (checkpoint_name,
+       checkpoint) in utils.GLOBAL_CHECKPOINT_DICT.items():
+    if not checkpoint.history:
+      logging.info('Nothing to save in "%s"', checkpoint_name)
+      continue
+
+    pickle_nest = checkpoint.history[-1].pickle_nest
+    global_step = pickle_nest['global_step']
+
+    state_dict = {'global_step': global_step}
+    for attribute, key in experiment_class.CHECKPOINT_ATTRS.items():
+      state_dict[key] = utils.get_first(
+          getattr(pickle_nest['experiment_module'], attribute))
+    save_dir = os.path.join(
+        save_path, checkpoint_name, _get_step_date_label(global_step))
+    python_state_path = os.path.join(save_dir, 'checkpoint.dill')
+    os.makedirs(save_dir, exist_ok=True)
+    with open(python_state_path, 'wb') as f:
+      dill.dump(state_dict, f)
+    logging.info(
+        'Saved "%s" checkpoint to %s', checkpoint_name, python_state_path)
+
+
 def main(argv, experiment_class):
+
+  # Maybe restore a model.
+  restore_path = FLAGS.config.restore_path
+  if restore_path:
+    _restore_state_to_in_memory_checkpointer(restore_path)
+
+  # Maybe save a model.
+  save_dir = os.path.join(FLAGS.config.checkpoint_dir, 'models')
+  if FLAGS.config.one_off_evaluate:
+    save_model_fn = lambda: None  # No need to save checkpoint in this case.
+  else:
+    save_model_fn = functools.partial(
+        _save_state_from_in_memory_checkpointer, save_dir, experiment_class)
+  _setup_signals(save_model_fn)  # Save on Ctrl+C (continue) or Ctrl+\ (exit).
+
+  try:
+    platform.main(experiment_class, argv)
+  finally:
+    save_model_fn()  # Save at the end of training or in case of exception.
   platform.main(experiment_class, argv)
+
 
 if __name__ == '__main__':
   flags.mark_flag_as_required('config')
