@@ -95,17 +95,13 @@ subdirectory of `config.checkpoint_dir` containing the relevant checkpoint
 To evaluate on in-context learning (on holdout classes):
 
 ```shell
-$ python -m emergent_in_context_learning.experiment.experiment --config $PATH_TO_CONFIG
- --logtostderr --config.one_off_evaluate --config.restore_path $CKPT_DIR
- --jaxline_mode eval_fewshot_holdout
+$ python -m emergent_in_context_learning.experiment.experiment --config $PATH_TO_CONFIG --logtostderr --config.one_off_evaluate --config.restore_path $CKPT_DIR --jaxline_mode eval_fewshot_holdout
 ```
 
 To evaluate on in-weights learning (on trained classes):
 
 ```shell
-$ python -m emergent_in_context_learning.experiment.experiment --config $PATH_TO_CONFIG
- --logtostderr --config.one_off_evaluate --config.restore_path $CKPT_DIR
- --jaxline_mode eval_no_support_zipfian
+$ python -m emergent_in_context_learning.experiment.experiment --config $PATH_TO_CONFIG --logtostderr --config.one_off_evaluate --config.restore_path $CKPT_DIR --jaxline_mode eval_no_support_zipfian
 ```
 
 
